@@ -13,6 +13,9 @@ import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.math.Interpolation;
+import ru.mipt.bit.platformer.graphics.GameObjGraphics;
+import ru.mipt.bit.platformer.graphics.ObstacleGraphics;
+import ru.mipt.bit.platformer.graphics.TankGraphics;
 import ru.mipt.bit.platformer.util.ColliderManager;
 import ru.mipt.bit.platformer.util.GdxKeyboardListener;
 import ru.mipt.bit.platformer.util.TileMovement;
@@ -42,7 +45,7 @@ public class GameDesktopLauncher implements ApplicationListener {
 
         // get time passed since the last render
         float deltaTime = Gdx.graphics.getDeltaTime();
-        
+
         player.move(deltaTime, colliderManager, keyboardListener);
         playerGraphics.updateRotation(player.rotation);
 
