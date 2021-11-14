@@ -16,10 +16,13 @@ import com.badlogic.gdx.math.Interpolation;
 import ru.mipt.bit.platformer.graphics.GameObjGraphics;
 import ru.mipt.bit.platformer.graphics.ObstacleGraphics;
 import ru.mipt.bit.platformer.graphics.TankGraphics;
+import ru.mipt.bit.platformer.level.LevelGeneratorFromFile;
+import ru.mipt.bit.platformer.level.LevelGeneratorRandom;
 import ru.mipt.bit.platformer.util.ColliderManager;
 import ru.mipt.bit.platformer.util.GdxKeyboardListener;
 import ru.mipt.bit.platformer.util.TileMovement;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 import static com.badlogic.gdx.graphics.GL20.GL_COLOR_BUFFER_BIT;
@@ -33,11 +36,11 @@ public class GameDesktopLauncher implements ApplicationListener {
     private MapRenderer levelRenderer;
     private Tank player;
     private TankGraphics playerGraphics;
-    private Obstacle tree;
-    private ObstacleGraphics treeGraphics;
     private final ArrayList<GameObjGraphics> gameObjectsGraphics = new ArrayList<>();
     private final GdxKeyboardListener keyboardListener = new GdxKeyboardListener();
     public ColliderManager colliderManager = new ColliderManager();
+    public LevelGeneratorFromFile levelGenerator = new LevelGeneratorFromFile("src/main/resources/disposition");
+//    public LevelGeneratorRandom levelGenerator = new LevelGeneratorRandom();
 
     @Override
     public void render() {
@@ -65,8 +68,13 @@ public class GameDesktopLauncher implements ApplicationListener {
         batch.end();
     }
 
-    public void initCollider() {
-        colliderManager.addObstacle(tree);
+    public void initColliderManager() {
+        for (Obstacle obstacle : levelGenerator.trees) {
+            colliderManager.addObstacle(obstacle);
+        }
+        for (Tank tank : levelGenerator.tanks) {
+            colliderManager.addTank(tank);
+        }
     }
 
     private void clearScreen() {
@@ -84,20 +92,33 @@ public class GameDesktopLauncher implements ApplicationListener {
 
         levelRenderer = createSingleLayerMapRenderer(level, batch);
 
-        loadGameObjectsAndGraphics();
+        try {
+            loadGameObjectsAndGraphics();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-        initCollider();
+        initColliderManager();
 
     }
 
-    private void loadGameObjectsAndGraphics() {
+    private void loadGameObjectsAndGraphics() throws IOException {
+        levelGenerator.generateLevel();
+
         player = new Tank(new GridPoint2(1, 1), 0f);
+////        uncomment the line below to initialize player using class LevelGeneratorRandom (and comment line above)
+//        player = new Tank(levelGenerator.getGameObjectRandomCoordinates(), 0f);
+
+
+        for (Obstacle obstacle : levelGenerator.trees) {
+            gameObjectsGraphics.add(new ObstacleGraphics(new Texture("images/greenTree.png"), groundLayer, obstacle.coordinates));
+        }
+        for (Tank tank : levelGenerator.tanks) {
+            gameObjectsGraphics.add(new TankGraphics(new Texture("images/tank_blue.png"), groundLayer, tank.coordinates, 0f));
+        }
         playerGraphics = new TankGraphics(new Texture("images/tank_blue.png"), groundLayer, player.coordinates, player.rotation);
         gameObjectsGraphics.add(playerGraphics);
 
-        tree = new Obstacle(new GridPoint2(1, 3), 0f);
-        treeGraphics = new ObstacleGraphics(new Texture("images/greenTree.png"), groundLayer, tree.coordinates);
-        gameObjectsGraphics.add(treeGraphics);
     }
 
     private void initLevelRenderer() {
@@ -122,9 +143,13 @@ public class GameDesktopLauncher implements ApplicationListener {
 
     @Override
     public void dispose() {
-        // dispose of all the native resources (classes which implement com.badlogic.gdx.utils.Disposable)
-        playerGraphics.texture.dispose();
-        treeGraphics.texture.dispose();
+        for (GameObjGraphics gameObjGraphics : gameObjectsGraphics) {
+            if (gameObjGraphics instanceof TankGraphics) {
+                ((TankGraphics) gameObjGraphics).texture.dispose();
+            } else {
+                ((ObstacleGraphics) gameObjGraphics).texture.dispose();
+            }
+        }
         level.dispose();
         batch.dispose();
     }

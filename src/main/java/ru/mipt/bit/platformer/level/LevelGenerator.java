@@ -4,5 +4,5 @@ import java.io.IOException;
 
 public interface LevelGenerator {
 
-    void generateLevel(String filepath) throws IOException;
+    void generateLevel() throws IOException;
 }
